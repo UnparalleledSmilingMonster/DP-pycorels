@@ -40,7 +40,7 @@ extern "C" {
 
 /*
  * Rulelist is an ordered collection of rules.
- * A Rule is simply and ID combined with a large binary vector of length N
+ * A Rule is simply an ID combined with a large binary vector of length N
  * where N is the number of samples and a 1 indicates that the rule captures
  * the sample and a 0 indicates that it does not.
  *
@@ -67,7 +67,7 @@ typedef unsigned long v_entry;
 typedef mpz_t VECTOR;
 #define VECTOR_ASSIGN(dest, src) mpz_init_set(dest, src)
 #else
-typedef v_entry *VECTOR;
+typedef v_entry *VECTOR; //array of unsigned long
 #define VECTOR_ASSIGN(dest, src) dest = src
 #endif
 

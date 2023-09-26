@@ -58,7 +58,7 @@ class Node {
     Node* parent_;
     double lower_bound_;
     double objective_;
-    double equivalent_minority_;
+    double equivalent_minority_; /* Ratio n/N where N = nb. of samples and n = number of data not captured or missclassified by the rule list  */
     size_t depth_;
     size_t num_captured_;
     unsigned short id_;

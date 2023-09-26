@@ -12,7 +12,8 @@
  */
 
 struct prefix_key {
-    unsigned short *key;
+    unsigned short *key; /*At first this is only a pointer to an unsigned short
+                         But it gets extended to an array where the first element gives the length of the prefix. */
     prefix_key(unsigned short* k) {
         key = k;
     }

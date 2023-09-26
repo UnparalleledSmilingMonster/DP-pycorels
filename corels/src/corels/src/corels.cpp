@@ -38,7 +38,7 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
     int nsamples = tree->nsamples();
     int nrules = tree->nrules();
     double c = tree->c();
-    double threshold = c * nsamples;
+    double threshold = c * nsamples; //For bound on antecedent support : n_v < N*c
     rule_vinit(nsamples, &captured);
     rule_vinit(nsamples, &captured_zeros);
     rule_vinit(nsamples, &not_captured);
@@ -57,11 +57,13 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
             continue;
         // captured represents data captured by the new rule
         rule_vand(captured, parent_not_captured, tree->rule(i).truthtable, nsamples, &num_captured);
-        // lower bound on antecedent support
+        // lower bound on antecedent support (theorem 10)
         if ((tree->ablation() != 1) && (num_captured < threshold))
             continue;
-        rule_vand(captured_zeros, captured, tree->label(0).truthtable, nsamples, &c0);
-        c1 = num_captured - c0;
+        rule_vand(captured_zeros, captured, tree->label(0).truthtable, nsamples, &c0); /* c0 : count of data captured with label 0 */
+        c1 = num_captured - c0; // c1 : count of data captured with label 1
+
+        // Choose for the rule whether q_i = 1 or 0 (majority label of captured data)
         if (c0 > c1) {
             prediction = 0;
             captured_correct = c0;
@@ -69,14 +71,16 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
             prediction = 1;
             captured_correct = c1;
         }
-        // lower bound on accurate antecedent support
+
+        // lower bound on accurate antecedent support (theorem 11) (denoted n_c in the paper)
         if ((tree->ablation() != 1) && (captured_correct < threshold))
             continue;
         // subtract off parent equivalent points bound because we want to use pure lower bound from parent
+        /*b(Dp, x,y) = b(dp, x,y)  + delta (= misclassification ratio error of the new rule) + c (incremental lower bound : see equation 30) */
         lower_bound = parent_lower_bound - parent_equivalent_minority + (double)(num_captured - captured_correct) / nsamples + c;
         logger->addToLowerBoundTime(time_diff(t1));
         logger->incLowerBoundNum();
-        if (lower_bound >= tree->min_objective()) // hierarchical objective lower bound
+        if (lower_bound >= tree->min_objective()) /*Hierarchical objective lower bound (theorem 1) : b(Dp,x,y) >= R^c ==> stop */
 	        continue;
         double t2 = timestamp();
         rule_vandnot(not_captured, parent_not_captured, captured, nsamples, &num_not_captured);
@@ -89,6 +93,7 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
             default_prediction = 1;
             default_correct = d1;
         }
+        /* Incremental computation of objective function using lower bound : see(32) */
         objective = lower_bound + (double)(num_not_captured - default_correct) / nsamples;
         logger->addToObjTime(time_diff(t2));
         logger->incObjNum();
@@ -106,6 +111,8 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
             logger->dumpState();
         }
         // calculate equivalent points bound to capture the fact that the minority points can never be captured correctly
+        /*From the paper : equivalent points bound theorem (20). The data can be separated into equivalent sets (i.e. sets of points captured by the same rule). For a given equivalent set e_u (hence a given rule antecedent p and q_u the minority class inside the equivalent the set),  equivalent minority = b0(Dp,x,y) = |{elements not captured by Dp} AND {elements belonging to the minority class of their equivalent set} |
+         Note how the equivalent sets can be computed beforehand (and their minority class) beforehand granted that we know the set of all antecedents*/
         if (tree->has_minority()) {
             rule_vand(not_captured_equivalent, not_captured, tree->minority(0).truthtable, nsamples, &num_not_captured_equivalent);
             equivalent_minority = (double)(num_not_captured_equivalent) / nsamples;
@@ -123,7 +130,7 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
                                    lower_bound, objective, parent, num_not_captured, nsamples,
                                    len_prefix, c, equivalent_minority, tree, not_captured, parent_prefix);
             logger->addToPermMapInsertionTime(time_diff(t3));
-            // n is NULL if this rule fails the permutaiton bound
+            // n is NULL if this rule fails the permutation bound
             if (n) {
                 double t4 = timestamp();
                 tree->insert(n);
