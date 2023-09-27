@@ -46,8 +46,8 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
     rule_vinit(nsamples, &not_captured_equivalent);
     int i, len_prefix;
     len_prefix = parent->depth() + 1;
-    parent_lower_bound = parent->lower_bound();
-    parent_equivalent_minority = parent->equivalent_minority();
+    parent_lower_bound = parent->lower_bound(); //b + b0
+    parent_equivalent_minority = parent->equivalent_minority(); //b0
     std::set<std::string> verbosity = logger->getVerbosity();
     double t0 = timestamp();
     for (i = 1; i < nrules; i++) {
@@ -76,11 +76,14 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
         if ((tree->ablation() != 1) && (captured_correct < threshold))
             continue;
         // subtract off parent equivalent points bound because we want to use pure lower bound from parent
-        /*b(Dp, x,y) = b(dp, x,y)  + delta (= misclassification ratio error of the new rule) + c (incremental lower bound : see equation 30) */
+        /*b(Dp, x,y) = b(dp, x,y)  + delta (= misclassification ratio error of the new rule) + c (incremental lower bound : see equation 30)
+        Actually, the computation below does not take into account this formula, it substracts b0(dp,x,y) yielding : b'(Dp, x,y) = b(dp, x,y) -b0(dp,x,y)  + delta (= misclassification ratio error of the new rule) + c  where b0 formula is reminded below
+        Why do this ?
+        The variable name lower bound is misleading. We are not computing the quantity b(Dp,x,y) but an analog quantity b'(Dp, x,y) denoted as the pure lower bound (not taking into account insconsistencies of the dataset). See note in cache.h about stored attributes. This is also why we substract b0(dp,x,y) because the incremental formula is for pure lower bounds and the stored values contains the inconsistencies for the parent bound too */
         lower_bound = parent_lower_bound - parent_equivalent_minority + (double)(num_captured - captured_correct) / nsamples + c;
         logger->addToLowerBoundTime(time_diff(t1));
         logger->incLowerBoundNum();
-        if (lower_bound >= tree->min_objective()) /*Hierarchical objective lower bound (theorem 1) : b(Dp,x,y) >= R^c ==> stop */
+        if (lower_bound >= tree->min_objective()) /*Hierarchical objective (pure) lower bound (theorem 1) : b(Dp,x,y) >= R^c ==> stop */
 	        continue;
         double t2 = timestamp();
         rule_vandnot(not_captured, parent_not_captured, captured, nsamples, &num_not_captured);
@@ -93,10 +96,12 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
             default_prediction = 1;
             default_correct = d1;
         }
-        /* Incremental computation of objective function using lower bound : see(32) */
+        /* Incremental computation of objective function using pure lower bound : see(32) */
         objective = lower_bound + (double)(num_not_captured - default_correct) / nsamples;
         logger->addToObjTime(time_diff(t2));
         logger->incObjNum();
+
+        // update current best rule list and objective
         if (objective < tree->min_objective()) {
             if (verbosity.count("progress")) {
                 printf("min(objective): %1.5f -> %1.5f, length: %d, cache size: %zu\n",
@@ -116,13 +121,14 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
         if (tree->has_minority()) {
             rule_vand(not_captured_equivalent, not_captured, tree->minority(0).truthtable, nsamples, &num_not_captured_equivalent);
             equivalent_minority = (double)(num_not_captured_equivalent) / nsamples;
-            lower_bound += equivalent_minority;
+            lower_bound += equivalent_minority; // add b0 to the pure lower bound to compute the true lower bound
         }
         if (tree->ablation() != 2)
             lookahead_bound = lower_bound + c;
         else
             lookahead_bound = lower_bound;
-        // only add node to our datastructures if its children will be viable
+        /* only add node to our datastructures if its children will be viable
+         Lookahead bound (lemma 2) */
         if (lookahead_bound < tree->min_objective()) {
             double t3 = timestamp();
             // check permutation bound

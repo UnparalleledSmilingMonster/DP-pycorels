@@ -56,9 +56,9 @@ class Node {
     std::map<unsigned short, Node* > children_;
 #endif
     Node* parent_;
-    double lower_bound_;
+    double lower_bound_; /* b(dp,x,y) + b0(dp,x,y) : inconsistency with the paper that only stores d(dp,x,y) the pure lower bound */
     double objective_;
-    double equivalent_minority_; /* Ratio n/N where N = nb. of samples and n = number of data not captured or missclassified by the rule list  */
+    double equivalent_minority_; /* b0(dp,x,y) : lower bound on the default rule misclassification  */
     size_t depth_;
     size_t num_captured_;
     unsigned short id_;

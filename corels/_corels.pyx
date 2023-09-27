@@ -90,23 +90,32 @@ def predict_wrap(np.ndarray[np.uint8_t, ndim=2] X, rules):
         for r in range(n_rules):
             next_rule = 0
             nidx = antecedent_lengths[r]
-            for a in range(nidx):
-                idx = antecedents[r][a]
+            for a in range(nidx): #Go through all the antecedents of a given rule r
+                idx = antecedents[r][a] 
                 c = 1
-                if idx < 0:
+                if idx < 0: 	#whether it is the antecedent or its negation
                     idx = -idx
                     c = 0
 
-                idx = idx - 1
-                if idx >= nfeatures or X[s, idx] != c:
+                idx = idx - 1 	""" I suppose that a shift (of 1) was made because otherwise if idx = 0 we don't know if it's the negation or not.
+                		    Consider the case where we consider the feature 0. The input is idx =1, it is not reversed because > 0. 
+                		    Then substract 1, it gives idx = 0 corresponding to feature 0.
+                		    Had we wanted to have the negation of feature 0. The input is idx =-1, it is reversed because < 0. 
+                		    Then substract 1, it gives idx = 0 corresponding to feature 0.
+                		"""
+                if idx >= nfeatures or X[s, idx] != c: """What does the first condition mean? If the antecedent is invalid? It is most probably a
+                				          guard. Second cond is if the antecedent is not true for sample then don't catch the sample.
+                				          Try with the next rule.	
+                   			               """
                     next_rule = 1
                     break
 
-            if next_rule == 0:
+            if next_rule == 0: """the sample is captured by the current rule (i.e. all antecedents of the rule are true for the sample) 
+            			   so no next rule is assessed"""
                 out[s] = predictions[r];
                 break
 
-        if next_rule == 1:
+        if next_rule == 1: #default rule (the sample was not capture by any of the previous rules)
             out[s] = default
 
     for r in range(n_rules):
