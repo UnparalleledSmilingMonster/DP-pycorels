@@ -3,6 +3,8 @@
 #include <iostream>
 #include <stdio.h>
 
+#define NO_BOUNDS
+
 #if defined(R_BUILD)
  #define STRICT_R_HEADERS
  #include "R.h"
@@ -58,8 +60,10 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
         // captured represents data captured by the new rule
         rule_vand(captured, parent_not_captured, tree->rule(i).truthtable, nsamples, &num_captured);
         // lower bound on antecedent support (theorem 10)
+        #ifndef NO_BOUNDS
         if ((tree->ablation() != 1) && (num_captured < threshold))
             continue;
+        #endif
         rule_vand(captured_zeros, captured, tree->label(0).truthtable, nsamples, &c0); /* c0 : count of data captured with label 0 */
         c1 = num_captured - c0; // c1 : count of data captured with label 1
 
@@ -73,8 +77,10 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
         }
 
         // lower bound on accurate antecedent support (theorem 11) (denoted n_c in the paper)
+        #ifndef NO_BOUNDS
         if ((tree->ablation() != 1) && (captured_correct < threshold))
             continue;
+        #endif
         // subtract off parent equivalent points bound because we want to use pure lower bound from parent
         /*b(Dp, x,y) = b(dp, x,y)  + delta (= misclassification ratio error of the new rule) + c (incremental lower bound : see equation 30)
         Actually, the computation below does not take into account this formula, it substracts b0(dp,x,y) yielding : b'(Dp, x,y) = b(dp, x,y) -b0(dp,x,y)  + delta (= misclassification ratio error of the new rule) + c  where b0 formula is reminded below
@@ -83,11 +89,16 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
         lower_bound = parent_lower_bound - parent_equivalent_minority + (double)(num_captured - captured_correct) / nsamples + c;
         logger->addToLowerBoundTime(time_diff(t1));
         logger->incLowerBoundNum();
+
+        #ifndef NO_BOUNDS
         if (lower_bound >= tree->min_objective()) /*Hierarchical objective (pure) lower bound (theorem 1) : b(Dp,x,y) >= R^c ==> stop */
 	        continue;
+        #endif
+
         double t2 = timestamp();
         rule_vandnot(not_captured, parent_not_captured, captured, nsamples, &num_not_captured);
         rule_vand(not_captured_zeros, not_captured, tree->label(0).truthtable, nsamples, &d0);
+        //TODO : implement differentially private mechanism on choice of the default prediction
         d1 = num_not_captured - d0;
         if (d0 > d1) {
             default_prediction = 0;
