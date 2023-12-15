@@ -19,10 +19,10 @@ CLEAN := corels *~ *.o *.so
 
 all: corels libcorels.so
 
-corels: run.o main.o corels.o pmap.o cache.o rulelib.o utils.o
+corels: run.o main.o corels.o pmap.o cache.o rulelib.o utils.o noise.o
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS)
 
-libcorels.so: run.o corels.o pmap.o cache.o rulelib.o utils.o
+libcorels.so: run.o corels.o pmap.o cache.o rulelib.o utils.o noise.o
 	$(CXX) -shared -o $@ $^ $(LDFLAGS) $(LIBS)
 
 main.o: main.cpp $(DEPSDIR)/stamp
@@ -44,6 +44,9 @@ rulelib.o: rulelib.cpp $(DEPSDIR)/stamp
 	$(CXX) $(CXXFLAGS) $(DEPCFLAGS) -c $< -o $@
 
 run.o: run.cpp $(DEPSDIR)/stamp
+	$(CXX) $(CXXFLAGS) $(DEPCFLAGS) -c $< -o $@
+
+noise.o: noise.cpp $(DESPDIR)
 	$(CXX) $(CXXFLAGS) $(DEPCFLAGS) -c $< -o $@
 
 $(DEPSDIR)/stamp:

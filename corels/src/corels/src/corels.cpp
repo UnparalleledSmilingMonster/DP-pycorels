@@ -1,4 +1,6 @@
 #include "queue.h"
+#include "noise.h"
+
 #include <algorithm>
 #include <iostream>
 #include <stdio.h>
@@ -40,6 +42,10 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
     int nsamples = tree->nsamples();
     int nrules = tree->nrules();
     double c = tree->c();
+    Noise noise = Noise(1.0,0.0,1.5,1);
+    std::cout << "Laplace noise test " << noise.laplace_noise() << std::endl;
+    std::cout << "Laplace noise test " << noise.laplace_noise() << std::endl;
+
     double threshold = c * nsamples; //For bound on antecedent support : n_v < N*c
     bool no_bounds = false; //when removing bounds for DP algo
     rule_vinit(nsamples, &captured);
@@ -142,9 +148,9 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
             lookahead_bound = lower_bound + c;
         else
             lookahead_bound = lower_bound;
+
         /* only add node to our datastructures if its children will be viable
          Lookahead bound (lemma 2) */
-
         #ifdef NO_BOUNDS
         no_bounds = true;
         #endif
@@ -152,6 +158,7 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
         if (no_bounds || lookahead_bound < tree->min_objective()) {
             double t3 = timestamp();
             // check permutation bound
+            //TODO : deactivate permutation bound
             Node* n = p->insert(i, nrules, prediction, default_prediction,
                                    lower_bound, objective, parent, num_not_captured, nsamples,
                                    len_prefix, c, equivalent_minority, tree, not_captured, parent_prefix);
