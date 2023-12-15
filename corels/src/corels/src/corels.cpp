@@ -41,6 +41,7 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
     int nrules = tree->nrules();
     double c = tree->c();
     double threshold = c * nsamples; //For bound on antecedent support : n_v < N*c
+    bool no_bounds = false; //when removing bounds for DP algo
     rule_vinit(nsamples, &captured);
     rule_vinit(nsamples, &captured_zeros);
     rule_vinit(nsamples, &not_captured);
@@ -59,11 +60,13 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
             continue;
         // captured represents data captured by the new rule
         rule_vand(captured, parent_not_captured, tree->rule(i).truthtable, nsamples, &num_captured);
+
         // lower bound on antecedent support (theorem 10)
         #ifndef NO_BOUNDS
         if ((tree->ablation() != 1) && (num_captured < threshold))
             continue;
         #endif
+
         rule_vand(captured_zeros, captured, tree->label(0).truthtable, nsamples, &c0); /* c0 : count of data captured with label 0 */
         c1 = num_captured - c0; // c1 : count of data captured with label 1
 
@@ -81,6 +84,7 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
         if ((tree->ablation() != 1) && (captured_correct < threshold))
             continue;
         #endif
+
         // subtract off parent equivalent points bound because we want to use pure lower bound from parent
         /*b(Dp, x,y) = b(dp, x,y)  + delta (= misclassification ratio error of the new rule) + c (incremental lower bound : see equation 30)
         Actually, the computation below does not take into account this formula, it substracts b0(dp,x,y) yielding : b'(Dp, x,y) = b(dp, x,y) -b0(dp,x,y)  + delta (= misclassification ratio error of the new rule) + c  where b0 formula is reminded below
@@ -140,7 +144,12 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
             lookahead_bound = lower_bound;
         /* only add node to our datastructures if its children will be viable
          Lookahead bound (lemma 2) */
-        if (lookahead_bound < tree->min_objective()) {
+
+        #ifdef NO_BOUNDS
+        no_bounds = true;
+        #endif
+
+        if (no_bounds || lookahead_bound < tree->min_objective()) {
             double t3 = timestamp();
             // check permutation bound
             Node* n = p->insert(i, nrules, prediction, default_prediction,
