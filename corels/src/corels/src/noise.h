@@ -15,7 +15,8 @@ private:
     double epsilon;
     double delta;
     double global_sensitivity;
-    double b_lap;
+    double b_lap; //the scale coefficient for Laplace mechanism
+
     //RAII : Ressource Acquisition Is Initialization ?
     boost::mt19937 rng;
     boost::random::uniform_01<double> dist01;
