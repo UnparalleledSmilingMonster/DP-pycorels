@@ -5,7 +5,7 @@
 
 #include "queue.h"
 #include "run.h"
-
+#include "noise.h"
 #if defined(R_BUILD)
  #define STRICT_R_HEADERS
  #include "R.h"
@@ -128,18 +128,16 @@ int run_corels_begin(double c, char* vstring, int curiosity_policy,
     return 0;
 }
 
-int run_corels_loop(size_t max_num_nodes, PermutationMap* pmap, CacheTree* tree, Queue* queue)
+int run_corels_loop(size_t max_num_nodes, PermutationMap* pmap, CacheTree* tree, Queue* queue, Noise * noise)
 {
     if((tree->num_nodes() < max_num_nodes) && !queue->empty()) {
-        bbound_loop(tree, queue, pmap);
+        bbound_loop(tree, queue, pmap, noise);
         return 0;
     }
     return -1;
 }
 
-double run_corels_end(std::vector<int>* rulelist, std::vector<int>* classes, int early, int latex_out, rule_t* rules,
-                      rule_t* labels, char* opt_fname, PermutationMap*& pmap, CacheTree*& tree, Queue*& queue,
-                      double init, std::set<std::string>& verbosity)
+double run_corels_end(std::vector< int >* rulelist, std::vector< int >* classes, int early, int latex_out, rule_t* rules, rule_t* labels, char* opt_fname, PermutationMap*& pmap, CacheTree*& tree, Queue*& queue, Noise* noise, double init, std::set< std::string >& verbosity)
 {
     bbound_end(tree, queue, pmap, early);
 
@@ -176,11 +174,14 @@ double run_corels_end(std::vector<int>* rulelist, std::vector<int>* classes, int
             delete queue;
         if (pmap)
             delete pmap;
+        if (noise)
+            delete noise;
     }
 
     tree = nullptr;
     queue = nullptr;
     pmap = nullptr;
+    noise = nullptr;
 
     return accuracy;
 }

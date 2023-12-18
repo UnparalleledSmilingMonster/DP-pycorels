@@ -10,10 +10,10 @@ int run_corels_begin(double c, char* vstring, int curiosity_policy,
                   PermutationMap*& pmap, CacheTree*& tree, Queue*& queue, double& init,
                   std::set<std::string>& verbosity);
 
-int run_corels_loop(size_t max_num_nodes, PermutationMap* pmap, CacheTree* tree, Queue* queue);
+int run_corels_loop(size_t max_num_nodes, PermutationMap* pmap, CacheTree* tree, Queue* queue, Noise* noise);
 
 double run_corels_end(std::vector<int>* rulelist, std::vector<int>* classes, int early, int latex_out, rule_t* rules,
-                      rule_t* labels, char* opt_fname, PermutationMap*& pmap, CacheTree*& tree, Queue*& queue,
+                      rule_t* labels, char* opt_fname, PermutationMap*& pmap, CacheTree*& tree, Queue*& queue, Noise* noise,
                       double init, std::set<std::string>& verbosity);
 
 #endif

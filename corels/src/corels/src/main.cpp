@@ -215,18 +215,19 @@ int main(int argc, char *argv[]) {
     Queue* queue = NULL;
     double init = 0.0;
     std::set<std::string> run_verbosity;
+    Noise *noise = new Noise(10,0.0,1,42); //TODO : set with the right parameters
 
     if(run_corels_begin(c, &verbstr[0], curiosity_policy, map_type, ablation, calculate_size,
                         nrules, nlabels, nsamples, rules, labels, meta, freq, &log_fname[0],
                         pmap, tree, queue, init, run_verbosity) == 0)
     {
-        while(run_corels_loop(max_num_nodes, pmap, tree, queue) == 0) { }
+        while(run_corels_loop(max_num_nodes, pmap, tree, queue, noise) == 0) { }
 
         std::vector<int> rulelist;
         std::vector<int> classes;
 
         run_corels_end(&rulelist, &classes, 0, latex_out, rules, labels, &opt_fname[0],
-                        pmap, tree, queue, init, verbosity);
+                        pmap, tree, queue, noise, init, verbosity);
     } else {
         fprintf(stderr, "Setup failed!\n");
         ret = 2;

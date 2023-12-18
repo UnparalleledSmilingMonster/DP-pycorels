@@ -31,7 +31,7 @@ Queue::~Queue() {
  * parent_not_captured -- the vector representing data points NOT captured by the parent.
  */
 void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned short, DataStruct::Tree> parent_prefix,
-        VECTOR parent_not_captured, Queue* q, PermutationMap* p) {
+        VECTOR parent_not_captured, Queue* q, PermutationMap* p, Noise *noise) {
     VECTOR captured, captured_zeros, not_captured, not_captured_zeros, not_captured_equivalent;
     int num_captured, c0, c1, captured_correct;
     int num_not_captured, d0, d1, default_correct, num_not_captured_equivalent;
@@ -42,10 +42,6 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
     int nsamples = tree->nsamples();
     int nrules = tree->nrules();
     double c = tree->c();
-    Noise noise = Noise(1.0,0.0,1.5,1);
-    std::cout << "Laplace noise test " << noise.laplace_noise() << std::endl;
-    std::cout << "Laplace noise test " << noise.laplace_noise() << std::endl;
-
     double threshold = c * nsamples; //For bound on antecedent support : n_v < N*c
     bool no_bounds = false; //when removing bounds for DP algo
     rule_vinit(nsamples, &captured);
@@ -53,6 +49,8 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
     rule_vinit(nsamples, &not_captured);
     rule_vinit(nsamples, &not_captured_zeros);
     rule_vinit(nsamples, &not_captured_equivalent);
+    //For debug : to ensure that the generator is not reset at each iteration
+    //std::cout << "Laplace noise test " << noise->laplace_noise() << std::endl;
     int i, len_prefix;
     len_prefix = parent->depth() + 1;
     parent_lower_bound = parent->lower_bound(); //b + b0
@@ -171,7 +169,8 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
                 logger->incPrefixLen(len_prefix);
                 logger->addToTreeInsertionTime(time_diff(t4));
                 double t5 = timestamp();
-                q->push(n);
+                q->push(n);    Noise noise = Noise(10,0.0,1,42);
+
                 logger->setQueueSize(q->size());
                 if (tree->calculate_size())
                     logger->addQueueElement(len_prefix, lower_bound, false);
@@ -229,10 +228,11 @@ void bbound_begin(CacheTree* tree, Queue* q) {
     logger->dumpState();
 }
 
-void bbound_loop(CacheTree* tree, Queue* q, PermutationMap* p) {
+void bbound_loop(CacheTree* tree, Queue* q, PermutationMap* p, Noise* noise) {
     double t0 = timestamp();
     std::set<std::string> verbosity = logger->getVerbosity();
     size_t queue_min_length = logger->getQueueMinLen();
+
     int cnt;
     std::pair<Node*, tracking_vector<unsigned short, DataStruct::Tree> > node_ordered = q->select(tree, captured);
     logger->addToNodeSelectTime(time_diff(t0));
@@ -243,7 +243,7 @@ void bbound_loop(CacheTree* tree, Queue* q, PermutationMap* p) {
         rule_vandnot(not_captured,
                      tree->rule(0).truthtable, captured,
                      tree->nsamples(), &cnt);
-        evaluate_children(tree, node_ordered.first, node_ordered.second, not_captured, q, p);
+        evaluate_children(tree, node_ordered.first, node_ordered.second, not_captured, q, p, noise);
         logger->addToEvalChildrenTime(time_diff(t1));
         logger->incEvalChildrenNum();
 

@@ -5,6 +5,7 @@
 #include <functional>
 #include <queue>
 #include <set>
+#include "noise.h"
 
 // pass custom allocator function to track memory allocations in the queue
 typedef std::priority_queue<Node*, tracking_vector<Node*, DataStruct::Queue>,
@@ -108,7 +109,7 @@ class Queue {
 };
 
 extern void bbound_begin(CacheTree* tree, Queue* q);
-extern void bbound_loop(CacheTree* tree, Queue* q, PermutationMap* p);
+extern void bbound_loop(CacheTree* tree, Queue* q, PermutationMap* p, Noise *noise);
 extern int bbound_end(CacheTree* tree, Queue* q, PermutationMap* p, bool early);
 
 extern void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned short, DataStruct::Tree> parent_prefix,
