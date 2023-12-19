@@ -26,6 +26,8 @@ private:
 
 public :
     Noise(double epsi, double delt, double global_sens, unsigned int seed);
+    //~Noise();    //Unique ptr automatically get deleted once out of scope
+
 
     double laplace_noise();
     double get_epsilon() const {return this->epsilon;}
