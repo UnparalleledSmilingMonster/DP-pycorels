@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
     const char usage[] = "USAGE: %s [-b] "
         "[-n max_num_nodes] [-r regularization] [-v (%s)] "
         "-c (1|2|3|4) -p (0|1|2) [-f logging_frequency] "
-        "-a (0|1|2) [-s] [-L latex_out]"
+        "-a (0|1|2) [-s] [-L latex_out] [-e epsilon] [-d delta] [-m (%s) ] [-k seed] "
         "data.out data.label [data.minor]\n\n"
         "%s\n";
 
@@ -36,8 +36,15 @@ int main(int argc, char *argv[]) {
     bool calculate_size = false;
     char verbstr[32];
     verbstr[0] = '\0';
+
+    //DP  variables
+    double epsilon = 1;
+    double delta = -1;
+    unsigned int seed = 42;
+    string method = "global";
+
     /* only parsing happens here */
-    while ((ch = getopt(argc, argv, "bsLc:p:v:n:r:f:a:u:")) != -1) {
+    while ((ch = getopt(argc, argv, "bsLc:p:v:n:r:f:a:u:e:d:k:m:")) != -1) {
         switch (ch) {
         case 'b':
             run_bfs = true;
@@ -71,6 +78,18 @@ int main(int argc, char *argv[]) {
             break;
         case 'a':
             ablation = atoi(optarg);
+            break;
+        case 'e':
+            epsilon = atof(optarg);
+            break;
+        case 'd':
+            delta = atof(optarg);
+            break;
+        case 'k':
+            seed = atoi(optarg);
+            break;
+        case 'm':
+            method = optarg;
             break;
         default:
             error = true;
@@ -122,7 +141,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (error) {
-        fprintf(stderr, usage, argv[0], VERBSTR, error_txt);
+        fprintf(stderr, usage, argv[0], VERBSTR, method.c_str(), error_txt);
         return 1;
     }
 
@@ -215,7 +234,7 @@ int main(int argc, char *argv[]) {
     Queue* queue = NULL;
     double init = 0.0;
     std::set<std::string> run_verbosity;
-    Noise *noise = new Noise(10,0.0,1,42); //TODO : set with the right parameters
+    Noise *noise = new Noise(epsilon,delta,1, nsamples, seed, method);
 
     if(run_corels_begin(c, &verbstr[0], curiosity_policy, map_type, ablation, calculate_size,
                         nrules, nlabels, nsamples, rules, labels, meta, freq, &log_fname[0],

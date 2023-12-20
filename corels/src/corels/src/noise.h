@@ -17,6 +17,8 @@ private:
     double global_sensitivity;
     double b_lap; //the scale coefficient for Laplace mechanism
 
+    std::string method;
+
     //RAII : Ressource Acquisition Is Initialization ?
     boost::mt19937 rng;
     boost::random::uniform_01<double> dist01;
@@ -25,7 +27,7 @@ private:
 
 
 public :
-    Noise(double epsi, double delt, double global_sens, unsigned int seed);
+    Noise(double epsi, double delt, double global_sens, unsigned int nsamples, unsigned int seed, std::string meth = "global");
     //~Noise();    //Unique ptr automatically get deleted once out of scope
 
 

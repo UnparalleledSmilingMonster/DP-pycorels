@@ -1,4 +1,4 @@
-CFLAGS := -g -W -Wall -Wno-unused-parameter -I. -O2 -fno-omit-frame-pointer -fPIC
+CFLAGS := -g -W -Wall -Wno-unused-parameter -I. -fsanitize=leak -O2 -fno-omit-frame-pointer -fPIC
 LIBS := 
 ifndef NGMP
     CFLAGS += -I/usr/local/include -DGMP

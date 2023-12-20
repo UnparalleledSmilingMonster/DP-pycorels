@@ -25,6 +25,7 @@ class Node {
     inline bool default_prediction() const;
     inline double lower_bound() const;
     inline double objective() const;
+    inline double dp_noise() const;
     inline bool done() const;
     inline void set_done();
     inline bool deleted() const;
@@ -59,6 +60,7 @@ class Node {
     double lower_bound_; /* b(dp,x,y) + b0(dp,x,y) : inconsistency with the paper that only stores d(dp,x,y) the pure lower bound */
     double objective_;
     double equivalent_minority_; /* b0(dp,x,y) : lower bound on the default rule misclassification  */
+    double dp_noise_;
     size_t depth_;
     size_t num_captured_;
     unsigned short id_;
@@ -177,6 +179,10 @@ inline double Node::lower_bound() const {
 
 inline double Node::objective() const {
     return objective_;
+}
+
+inline double Node::dp_noise() const{
+    return dp_noise_;
 }
 
 inline bool Node::done() const{

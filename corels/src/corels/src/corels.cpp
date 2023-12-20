@@ -169,8 +169,7 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
                 logger->incPrefixLen(len_prefix);
                 logger->addToTreeInsertionTime(time_diff(t4));
                 double t5 = timestamp();
-                q->push(n);    Noise noise = Noise(10,0.0,1,42);
-
+                q->push(n);
                 logger->setQueueSize(q->size());
                 if (tree->calculate_size())
                     logger->addQueueElement(len_prefix, lower_bound, false);

@@ -73,6 +73,11 @@ Node* PrefixPermutationMap::insert (unsigned short new_rule, size_t nrules, bool
                                  c, equivalent_minority);
         unsigned char* ordered_prefix = &ordered[0];
         pmap->insert(std::make_pair(key, std::make_pair(lower_bound, ordered_prefix)));
+
+        free(ordered);
+        free(pre_key);
+        free(ordered_prefix);
+
         logger->incPmapSize();
     }
     return child;

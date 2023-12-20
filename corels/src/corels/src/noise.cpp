@@ -8,11 +8,19 @@
 
 
 //Constructor :
-Noise::Noise(double epsi, double delt, double global_sens, unsigned int seed):
+Noise::Noise(double epsi, double delt, double global_sens, unsigned int nsamples, unsigned int seed, std::string meth):
 epsilon(epsi), delta(delt), global_sensitivity(global_sens), b_lap(global_sensitivity/epsilon), rng(boost::mt19937(seed))
 {
+    method = meth;
+    if (method =="global") delta = 0;
+    else if (method == "smooth"){
+        throw std::invalid_argument("The smooth sensitivity method is not yet implemented.");
+        /*delta = (delta <= 0 )? (double) (1/nsamples*nsamples) : delta;
+        b_lap = ; //TODO : Find smooth sensitivity of lower bound : good luck.
+        */
+    }
+    else throw std::invalid_argument("No such method. Choose between global and smooth.");
     uniform01 =std::unique_ptr<uniform_generator>(new uniform_generator(rng, dist01));
-
 }
 
 
