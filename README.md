@@ -4,6 +4,8 @@ Fork of pycorels, the python binding to CORELS. Adapting the CORELS algorithm to
 Very Important : For the algorithm to be differentially Private, one needs to deactivate the symmetry-aware maps when running corels. (Specify the option `-p 0`)
 
 
+For maintenance / debug purposes : since most of this C++ code uses bare pointers (it's more like C with classes...), I strongly recommend to add the directive `-fsanitize=leak` to the makefile (replace leak by address for a more thorough analysis, longer though).
+
 
 ## Pycorels
 [![Build Status](https://travis-ci.org/fingoldin/pycorels.svg?branch=master)](https://travis-ci.org/fingoldin/pycorels)
