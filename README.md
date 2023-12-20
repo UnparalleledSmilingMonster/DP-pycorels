@@ -1,4 +1,11 @@
-# Pycorels
+# DP-Pycorels
+Fork of pycorels, the python binding to CORELS. Adapting the CORELS algorithm to induce Diffrentially Private mechanisms.
+
+Very Important : For the algorithm to be differentially Private, one needs to deactivate the symmetry-aware maps when running corels. (Specify the option `-p 0`)
+
+
+
+## Pycorels
 [![Build Status](https://travis-ci.org/fingoldin/pycorels.svg?branch=master)](https://travis-ci.org/fingoldin/pycorels)
 [![Documentation Status](https://readthedocs.org/projects/pycorels/badge/?version=latest)](https://pycorels.readthedocs.io/en/latest/?badge=latest)
 
