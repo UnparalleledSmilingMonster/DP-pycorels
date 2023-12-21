@@ -60,7 +60,6 @@ class Node {
     double lower_bound_; /* b(dp,x,y) + b0(dp,x,y) : inconsistency with the paper that only stores d(dp,x,y) the pure lower bound */
     double objective_;
     double equivalent_minority_; /* b0(dp,x,y) : lower bound on the default rule misclassification  */
-    double dp_noise_;
     size_t depth_;
     size_t num_captured_;
     unsigned short id_;
@@ -103,6 +102,7 @@ class CacheTree {
            int nsamples, int len_prefix, double c, double equivalent_minority);
 
     inline double min_objective() const;
+    inline double associated_noise() const;
     inline tracking_vector<unsigned short, DataStruct::Tree> opt_rulelist() const;
     inline tracking_vector<bool, DataStruct::Tree> opt_predictions() const;
 
@@ -119,6 +119,7 @@ class CacheTree {
     inline Node* root() const;
 
     void update_min_objective(double objective);
+    void update_associated_noise(double noise);
     void update_opt_rulelist(tracking_vector<unsigned short, DataStruct::Tree>& parent_prefix,
                              unsigned short new_rule_id);
     void update_opt_predictions(Node* parent, bool new_pred, bool new_default_pred);
@@ -147,6 +148,7 @@ class CacheTree {
     bool calculate_size_;
 
     double min_objective_;
+    double dp_noise_;
     tracking_vector<unsigned short, DataStruct::Tree> opt_rulelist_;
 #if defined(TRACK_ALLOC)
     std::vector<bool, track_alloc<bool, DataStruct::Tree> > opt_predictions_;
@@ -179,10 +181,6 @@ inline double Node::lower_bound() const {
 
 inline double Node::objective() const {
     return objective_;
-}
-
-inline double Node::dp_noise() const{
-    return dp_noise_;
 }
 
 inline bool Node::done() const{
@@ -265,6 +263,10 @@ inline double CacheTree::min_objective() const {
     return min_objective_;
 }
 
+inline double CacheTree::associated_noise() const{
+    return dp_noise_;
+}
+
 inline tracking_vector<unsigned short, DataStruct::Tree> CacheTree::opt_rulelist() const {
     return opt_rulelist_;
 }
@@ -333,6 +335,9 @@ inline void CacheTree::update_min_objective(double objective) {
     logger->setTreeMinObj(objective);
 }
 
+inline void CacheTree::update_associated_noise(double noise){
+    dp_noise_ = noise;
+}
 /*
  * Update the optimal rulelist of the tree.
  */

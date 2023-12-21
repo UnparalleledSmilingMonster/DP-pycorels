@@ -120,8 +120,10 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
         logger->addToObjTime(time_diff(t2));
         logger->incObjNum();
 
+        double current_rule_noise = noise->laplace_noise();
         // update current best rule list and objective
-        if (objective < tree->min_objective()) {
+
+        if (objective + current_rule_noise< tree->min_objective() + tree->associated_noise()) {
             if (verbosity.count("progress")) {
                 printf("min(objective): %1.5f -> %1.5f, length: %d, cache size: %zu\n",
                    tree->min_objective(), objective, len_prefix, tree->num_nodes());
@@ -129,6 +131,7 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
 
             logger->setTreeMinObj(objective);
             tree->update_min_objective(objective);
+            tree->update_associated_noise(current_rule_noise);
             tree->update_opt_rulelist(parent_prefix, i);
             tree->update_opt_predictions(parent, prediction, default_prediction);
             // dump state when min objective is updated
@@ -156,7 +159,7 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
         if (no_bounds || lookahead_bound < tree->min_objective()) {
             double t3 = timestamp();
             // check permutation bound
-            //TODO : deactivate permutation bound
+            //TODO : deactivate permutation bound : use -p 0 when launching
             Node* n = p->insert(i, nrules, prediction, default_prediction,
                                    lower_bound, objective, parent, num_not_captured, nsamples,
                                    len_prefix, c, equivalent_minority, tree, not_captured, parent_prefix);
@@ -270,7 +273,7 @@ void bbound_loop(CacheTree* tree, Queue* q, PermutationMap* p, Noise* noise) {
                    num_iter, tree->num_nodes(), q->size(), p->size(), time_diff(start));
     }
     if ((num_iter % logger->getFrequency()) == 0) {
-        // want ~1000 records for detailed figures
+        // want ~1000 records for detailed figures|| lookahead_bound < tree->min_objective()
         logger->dumpState();
     }
 }

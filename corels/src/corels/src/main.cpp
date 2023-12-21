@@ -115,8 +115,7 @@ int main(int argc, char *argv[]) {
     }
     if (argc < 2 + optind) {
         error = true;
-        _snprintf(error_txt, BUFSZ,
-                "you must specify data files for rules and labels");
+        _snprintf(error_txt, BUFSZ,"you must specify data files for rules and labels");
     }
     if (run_curiosity && !((curiosity_policy >= 1) && (curiosity_policy <= 4))) {
         error = true;
