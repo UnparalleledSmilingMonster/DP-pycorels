@@ -128,10 +128,10 @@ int run_corels_begin(double c, char* vstring, int curiosity_policy,
     return 0;
 }
 
-int run_corels_loop(size_t max_num_nodes, PermutationMap* pmap, CacheTree* tree, Queue* queue, Noise * noise)
+int run_corels_loop(size_t max_num_nodes, PermutationMap* pmap, CacheTree* tree, Queue* queue, Noise * noise, unsigned int max_length)
 {
     if((tree->num_nodes() < max_num_nodes) && !queue->empty()) {
-        bbound_loop(tree, queue, pmap, noise);
+        bbound_loop(tree, queue, pmap, noise, max_length);
         return 0;
     }
     return -1;

@@ -31,172 +31,177 @@ Queue::~Queue() {
  * parent_not_captured -- the vector representing data points NOT captured by the parent.
  */
 void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned short, DataStruct::Tree> parent_prefix,
-        VECTOR parent_not_captured, Queue* q, PermutationMap* p, Noise *noise) {
-    VECTOR captured, captured_zeros, not_captured, not_captured_zeros, not_captured_equivalent;
-    int num_captured, c0, c1, captured_correct;
-    int num_not_captured, d0, d1, default_correct, num_not_captured_equivalent;
-    bool prediction, default_prediction;
-    double lower_bound, objective, parent_lower_bound, lookahead_bound;
-    double parent_equivalent_minority;
-    double equivalent_minority = 0.;
-    int nsamples = tree->nsamples();
-    int nrules = tree->nrules();
-    double c = tree->c();
-    double threshold = c * nsamples; //For bound on antecedent support : n_v < N*c
-    bool no_bounds = false; //when removing bounds for DP algo
-    rule_vinit(nsamples, &captured);
-    rule_vinit(nsamples, &captured_zeros);
-    rule_vinit(nsamples, &not_captured);
-    rule_vinit(nsamples, &not_captured_zeros);
-    rule_vinit(nsamples, &not_captured_equivalent);
-    //For debug : to ensure that the generator is not reset at each iteration
-    //std::cout << "Laplace noise test " << noise->laplace_noise() << std::endl;
-    int i, len_prefix;
-    len_prefix = parent->depth() + 1;
-    parent_lower_bound = parent->lower_bound(); //b + b0
-    parent_equivalent_minority = parent->equivalent_minority(); //b0
-    std::set<std::string> verbosity = logger->getVerbosity();
-    double t0 = timestamp();
-    for (i = 1; i < nrules; i++) {
-        double t1 = timestamp();
-        // check if this rule is already in the prefix
-        if (std::find(parent_prefix.begin(), parent_prefix.end(), i) != parent_prefix.end())
-            continue;
-        // captured represents data captured by the new rule
-        rule_vand(captured, parent_not_captured, tree->rule(i).truthtable, nsamples, &num_captured);
+        VECTOR parent_not_captured, Queue* q, PermutationMap* p, Noise *noise, unsigned int max_length) {
 
-        // lower bound on antecedent support (theorem 10)
-        #ifndef NO_BOUNDS
-        if ((tree->ablation() != 1) && (num_captured < threshold))
-            continue;
-        #endif
+    if (parent->depth() < max_length -1 ){ //-1 to account for the default rule
+        VECTOR captured, captured_zeros, not_captured, not_captured_zeros, not_captured_equivalent;
+        int num_captured, c0, c1, captured_correct;
+        int num_not_captured, d0, d1, default_correct, num_not_captured_equivalent;
+        bool prediction, default_prediction;
+        double lower_bound, objective, parent_lower_bound, lookahead_bound;
+        double parent_equivalent_minority;
+        double equivalent_minority = 0.;
+        int nsamples = tree->nsamples();
+        int nrules = tree->nrules();
+        double c = tree->c();
+        double threshold = c * nsamples; //For bound on antecedent support : n_v < N*c
+        bool no_bounds = false; //when removing bounds for DP algo
+        rule_vinit(nsamples, &captured);
+        rule_vinit(nsamples, &captured_zeros);
+        rule_vinit(nsamples, &not_captured);
+        rule_vinit(nsamples, &not_captured_zeros);
+        rule_vinit(nsamples, &not_captured_equivalent);
+        //For debug : to ensure that the generator is not reset at each iteration
+        //std::cout << "Laplace noise test " << noise->laplace_noise() << std::endl;
+        int i, len_prefix;
+        len_prefix = parent->depth() + 1;
+        parent_lower_bound = parent->lower_bound(); //b + b0
+        parent_equivalent_minority = parent->equivalent_minority(); //b0
+        std::set<std::string> verbosity = logger->getVerbosity();
+        double t0 = timestamp();
+        for (i = 1; i < nrules; i++) {
+            double t1 = timestamp();
+            // check if this rule is already in the prefix
+            if (std::find(parent_prefix.begin(), parent_prefix.end(), i) != parent_prefix.end())
+                continue;
+            // captured represents data captured by the new rule
+            rule_vand(captured, parent_not_captured, tree->rule(i).truthtable, nsamples, &num_captured);
 
-        rule_vand(captured_zeros, captured, tree->label(0).truthtable, nsamples, &c0); /* c0 : count of data captured with label 0 */
-        c1 = num_captured - c0; // c1 : count of data captured with label 1
+            // lower bound on antecedent support (theorem 10)
+            #ifndef NO_BOUNDS
+            if ((tree->ablation() != 1) && (num_captured < threshold))
+                continue;
+            #endif
 
-        // Choose for the rule whether q_i = 1 or 0 (majority label of captured data)
-        if (c0 > c1) {
-            prediction = 0;
-            captured_correct = c0;
-        } else {
-            prediction = 1;
-            captured_correct = c1;
-        }
+            rule_vand(captured_zeros, captured, tree->label(0).truthtable, nsamples, &c0); /* c0 : count of data captured with label 0 */
+            c1 = num_captured - c0; // c1 : count of data captured with label 1
 
-        // lower bound on accurate antecedent support (theorem 11) (denoted n_c in the paper)
-        #ifndef NO_BOUNDS
-        if ((tree->ablation() != 1) && (captured_correct < threshold))
-            continue;
-        #endif
-
-        // subtract off parent equivalent points bound because we want to use pure lower bound from parent
-        /*b(Dp, x,y) = b(dp, x,y)  + delta (= misclassification ratio error of the new rule) + c (incremental lower bound : see equation 30)
-        Actually, the computation below does not take into account this formula, it substracts b0(dp,x,y) yielding : b'(Dp, x,y) = b(dp, x,y) -b0(dp,x,y)  + delta (= misclassification ratio error of the new rule) + c  where b0 formula is reminded below
-        Why do this ?
-        The variable name lower bound is misleading. We are not computing the quantity b(Dp,x,y) but an analog quantity b'(Dp, x,y) denoted as the pure lower bound (not taking into account insconsistencies of the dataset). See note in cache.h about stored attributes. This is also why we substract b0(dp,x,y) because the incremental formula is for pure lower bounds and the stored values contains the inconsistencies for the parent bound too */
-        lower_bound = parent_lower_bound - parent_equivalent_minority + (double)(num_captured - captured_correct) / nsamples + c;
-        logger->addToLowerBoundTime(time_diff(t1));
-        logger->incLowerBoundNum();
-
-        #ifndef NO_BOUNDS
-        if (lower_bound >= tree->min_objective()) /*Hierarchical objective (pure) lower bound (theorem 1) : b(Dp,x,y) >= R^c ==> stop */
-	        continue;
-        #endif
-
-        double t2 = timestamp();
-        rule_vandnot(not_captured, parent_not_captured, captured, nsamples, &num_not_captured);
-        rule_vand(not_captured_zeros, not_captured, tree->label(0).truthtable, nsamples, &d0);
-        //TODO : implement differentially private mechanism on choice of the default prediction
-        d1 = num_not_captured - d0;
-        if (d0 > d1) {
-            default_prediction = 0;
-            default_correct = d0;
-        } else {
-            default_prediction = 1;
-            default_correct = d1;
-        }
-        /* Incremental computation of objective function using pure lower bound : see(32) */
-        objective = lower_bound + (double)(num_not_captured - default_correct) / nsamples;
-        logger->addToObjTime(time_diff(t2));
-        logger->incObjNum();
-
-        double current_rule_noise = noise->laplace_noise();
-        // update current best rule list and objective
-
-        if (objective + current_rule_noise< tree->min_objective() + tree->associated_noise()) {
-            if (verbosity.count("progress")) {
-                printf("min(objective): %1.5f -> %1.5f, length: %d, cache size: %zu\n",
-                   tree->min_objective(), objective, len_prefix, tree->num_nodes());
+            // Choose for the rule whether q_i = 1 or 0 (majority label of captured data)
+            //The choice of the majority label without noise is not DP !
+            if (c0 + noise->laplace_noise() > c1 + noise->laplace_noise()) {
+                prediction = 0;
+                captured_correct = c0;
+            } else {
+                prediction = 1;
+                captured_correct = c1;
             }
 
-            logger->setTreeMinObj(objective);
-            tree->update_min_objective(objective);
-            tree->update_associated_noise(current_rule_noise);
-            tree->update_opt_rulelist(parent_prefix, i);
-            tree->update_opt_predictions(parent, prediction, default_prediction);
-            // dump state when min objective is updated
-            logger->dumpState();
-        }
-        // calculate equivalent points bound to capture the fact that the minority points can never be captured correctly
-        /*From the paper : equivalent points bound theorem (20). The data can be separated into equivalent sets (i.e. sets of points captured by the same rule). For a given equivalent set e_u (hence a given rule antecedent p and q_u the minority class inside the equivalent the set),  equivalent minority = b0(Dp,x,y) = |{elements not captured by Dp} AND {elements belonging to the minority class of their equivalent set} |
-         Note how the equivalent sets can be computed beforehand (and their minority class) beforehand granted that we know the set of all antecedents*/
-        if (tree->has_minority()) {
-            rule_vand(not_captured_equivalent, not_captured, tree->minority(0).truthtable, nsamples, &num_not_captured_equivalent);
-            equivalent_minority = (double)(num_not_captured_equivalent) / nsamples;
-            lower_bound += equivalent_minority; // add b0 to the pure lower bound to compute the true lower bound
-        }
-        if (tree->ablation() != 2)
-            lookahead_bound = lower_bound + c;
-        else
-            lookahead_bound = lower_bound;
+            // lower bound on accurate antecedent support (theorem 11) (denoted n_c in the paper)
+            #ifndef NO_BOUNDS
+            if ((tree->ablation() != 1) && (captured_correct < threshold))
+                continue;
+            #endif
 
-        /* only add node to our datastructures if its children will be viable
-         Lookahead bound (lemma 2) */
-        #ifdef NO_BOUNDS
-        no_bounds = true;
-        #endif
+            // subtract off parent equivalent points bound because we want to use pure lower bound from parent
+            /*b(Dp, x,y) = b(dp, x,y)  + delta (= misclassification ratio error of the new rule) + c (incremental lower bound : see equation 30)
+            Actually, the computation below does not take into account this formula, it substracts b0(dp,x,y) yielding : b'(Dp, x,y) = b(dp, x,y) -b0(dp,x,y)  + delta (= misclassification ratio error of the new rule) + c  where b0 formula is reminded below
+            Why do this ?
+            The variable name lower bound is misleading. We are not computing the quantity b(Dp,x,y) but an analog quantity b'(Dp, x,y) denoted as the pure lower bound (not taking into account insconsistencies of the dataset). See note in cache.h about stored attributes. This is also why we substract b0(dp,x,y) because the incremental formula is for pure lower bounds and the stored values contains the inconsistencies for the parent bound too */
+            lower_bound = parent_lower_bound - parent_equivalent_minority + (double)(num_captured - captured_correct) / nsamples + c;
+            logger->addToLowerBoundTime(time_diff(t1));
+            logger->incLowerBoundNum();
 
-        if (no_bounds || lookahead_bound < tree->min_objective()) {
-            double t3 = timestamp();
-            // check permutation bound
-            //TODO : deactivate permutation bound : use -p 0 when launching
-            Node* n = p->insert(i, nrules, prediction, default_prediction,
-                                   lower_bound, objective, parent, num_not_captured, nsamples,
-                                   len_prefix, c, equivalent_minority, tree, not_captured, parent_prefix);
-            logger->addToPermMapInsertionTime(time_diff(t3));
-            // n is NULL if this rule fails the permutation bound
-            if (n) {
-                double t4 = timestamp();
-                tree->insert(n);
-                logger->incTreeInsertionNum();
-                logger->incPrefixLen(len_prefix);
-                logger->addToTreeInsertionTime(time_diff(t4));
-                double t5 = timestamp();
-                q->push(n);
-                logger->setQueueSize(q->size());
-                if (tree->calculate_size())
-                    logger->addQueueElement(len_prefix, lower_bound, false);
-                logger->addToQueueInsertionTime(time_diff(t5));
+            #ifndef NO_BOUNDS
+            if (lower_bound >= tree->min_objective()) /*Hierarchical objective (pure) lower bound (theorem 1) : b(Dp,x,y) >= R^c ==> stop */
+                continue;
+            #endif
+
+            double t2 = timestamp();
+            rule_vandnot(not_captured, parent_not_captured, captured, nsamples, &num_not_captured);
+            rule_vand(not_captured_zeros, not_captured, tree->label(0).truthtable, nsamples, &d0);
+            //TODO : implement differentially private mechanism on choice of the default prediction
+            d1 = num_not_captured - d0;
+            if (d0 > d1) {
+                default_prediction = 0;
+                default_correct = d0;
+            } else {
+                default_prediction = 1;
+                default_correct = d1;
             }
-        } // else:  objective lower bound with one-step lookahead
-    }
+            /* Incremental computation of objective function using pure lower bound : see(32) */
+            objective = lower_bound + (double)(num_not_captured - default_correct) / nsamples;
+            logger->addToObjTime(time_diff(t2));
+            logger->incObjNum();
 
-    rule_vfree(&captured);
-    rule_vfree(&captured_zeros);
-    rule_vfree(&not_captured);
-    rule_vfree(&not_captured_zeros);
-    rule_vfree(&not_captured_equivalent);
+            double current_rule_noise = noise->laplace_noise();
+            // update current best rule list and objective
 
-    logger->addToRuleEvalTime(time_diff(t0));
-    logger->incRuleEvalNum();
-    logger->decPrefixLen(parent->depth());
-    if (tree->calculate_size())
-        logger->removeQueueElement(len_prefix - 1, parent_lower_bound, false);
-    if (parent->num_children() == 0) {
-        tree->prune_up(parent);
-    } else {
-        parent->set_done();
-        tree->increment_num_evaluated();
+            if (objective + current_rule_noise< tree->min_objective() + tree->associated_noise()) {
+                if (verbosity.count("progress")) {
+                    printf("min(objective): %1.5f -> %1.5f, length: %d, cache size: %zu\n",
+                    tree->min_objective(), objective, len_prefix, tree->num_nodes());
+                }
+
+                logger->setTreeMinObj(objective);
+                tree->update_min_objective(objective);
+                tree->update_associated_noise(current_rule_noise);
+                tree->update_opt_rulelist(parent_prefix, i);
+                tree->update_opt_predictions(parent, prediction, default_prediction);
+                // dump state when min objective is updated
+                logger->dumpState();
+            }
+            // calculate equivalent points bound to capture the fact that the minority points can never be captured correctly
+            /*From the paper : equivalent points bound theorem (20). The data can be separated into equivalent sets (i.e. sets of points captured by the same rule). For a given equivalent set e_u (hence a given rule antecedent p and q_u the minority class inside the equivalent the set),  equivalent minority = b0(Dp,x,y) = |{elements not captured by Dp} AND {elements belonging to the minority class of their equivalent set} |
+            Note how the equivalent sets can be computed beforehand (and their minority class) beforehand granted that we know the set of all antecedents*/
+            if (tree->has_minority()) {
+                rule_vand(not_captured_equivalent, not_captured, tree->minority(0).truthtable, nsamples, &num_not_captured_equivalent);
+                equivalent_minority = (double)(num_not_captured_equivalent) / nsamples;
+                lower_bound += equivalent_minority; // add b0 to the pure lower bound to compute the true lower bound
+            }
+            if (tree->ablation() != 2)
+                lookahead_bound = lower_bound + c;
+            else
+                lookahead_bound = lower_bound;
+
+            /* only add node to our datastructures if its children will be viable
+            Lookahead bound (lemma 2) */
+            #ifdef NO_BOUNDS
+            no_bounds = true;
+            #endif
+
+            if (no_bounds || lookahead_bound < tree->min_objective()) {
+                double t3 = timestamp();
+                // check permutation bound
+                //TODO : deactivate permutation bound : use -p 0 when launching
+                Node* n = p->insert(i, nrules, prediction, default_prediction,
+                                    lower_bound, objective, parent, num_not_captured, nsamples,
+                                    len_prefix, c, equivalent_minority, tree, not_captured, parent_prefix);
+                logger->addToPermMapInsertionTime(time_diff(t3));
+                // n is NULL if this rule fails the permutation bound
+                if (n) {
+                    double t4 = timestamp();
+                    tree->insert(n);
+                    logger->incTreeInsertionNum();
+                    logger->incPrefixLen(len_prefix);
+                    logger->addToTreeInsertionTime(time_diff(t4));
+                    double t5 = timestamp();
+                    q->push(n);
+                    logger->setQueueSize(q->size());
+                    if (tree->calculate_size())
+                        logger->addQueueElement(len_prefix, lower_bound, false);
+                    logger->addToQueueInsertionTime(time_diff(t5));
+                }
+            } // else:  objective lower bound with one-step lookahead
+
+        }
+
+        rule_vfree(&captured);
+        rule_vfree(&captured_zeros);
+        rule_vfree(&not_captured);
+        rule_vfree(&not_captured_zeros);
+        rule_vfree(&not_captured_equivalent);
+
+        logger->addToRuleEvalTime(time_diff(t0));
+        logger->incRuleEvalNum();
+        logger->decPrefixLen(parent->depth());
+        if (tree->calculate_size())
+            logger->removeQueueElement(len_prefix - 1, parent_lower_bound, false);
+        if (parent->num_children() == 0) {
+            tree->prune_up(parent);
+        } else {
+            parent->set_done();
+            tree->increment_num_evaluated();
+        }
     }
 }
 
@@ -230,7 +235,7 @@ void bbound_begin(CacheTree* tree, Queue* q) {
     logger->dumpState();
 }
 
-void bbound_loop(CacheTree* tree, Queue* q, PermutationMap* p, Noise* noise) {
+void bbound_loop(CacheTree* tree, Queue* q, PermutationMap* p, Noise* noise, unsigned int max_length) {
     double t0 = timestamp();
     std::set<std::string> verbosity = logger->getVerbosity();
     size_t queue_min_length = logger->getQueueMinLen();
@@ -245,7 +250,7 @@ void bbound_loop(CacheTree* tree, Queue* q, PermutationMap* p, Noise* noise) {
         rule_vandnot(not_captured,
                      tree->rule(0).truthtable, captured,
                      tree->nsamples(), &cnt);
-        evaluate_children(tree, node_ordered.first, node_ordered.second, not_captured, q, p, noise);
+        evaluate_children(tree, node_ordered.first, node_ordered.second, not_captured, q, p, noise, max_length);
         logger->addToEvalChildrenTime(time_diff(t1));
         logger->incEvalChildrenNum();
 

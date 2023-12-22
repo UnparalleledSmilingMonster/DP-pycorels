@@ -243,7 +243,7 @@ int main(int argc, char *argv[]) {
                         nrules, nlabels, nsamples, rules, labels, meta, freq, &log_fname[0],
                         pmap, tree, queue, init, run_verbosity) == 0)
     {
-        while(run_corels_loop(max_num_nodes, pmap, tree, queue, noise) == 0) { }
+        while(run_corels_loop(max_num_nodes, pmap, tree, queue, noise, max_length) == 0) { }
 
         std::vector<int> rulelist;
         std::vector<int> classes;

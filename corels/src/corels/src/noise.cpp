@@ -15,7 +15,7 @@ epsilon_per_node(epsilon/(2*max_length-1)), delta_per_node(delta), global_sensit
     if (method =="global") delta_per_node = 0;
     else if (method == "smooth"){
         throw std::invalid_argument("The smooth sensitivity method is not yet implemented.");
-        /*delta = (delta <= 0 )? (double) (1/nsamples*nsamples) : delta;
+        /*delta = (delta <= 0 )? (double) 1/(nsamples*nsamples*(2*max_length-1)) : delta/(2*max_length-1);
         b_lap = ; //TODO : Find smooth sensitivity of lower bound : good luck.
         */
     }
