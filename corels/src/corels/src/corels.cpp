@@ -109,9 +109,9 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
             double t2 = timestamp();
             rule_vandnot(not_captured, parent_not_captured, captured, nsamples, &num_not_captured);
             rule_vand(not_captured_zeros, not_captured, tree->label(0).truthtable, nsamples, &d0);
-            //TODO : implement differentially private mechanism on choice of the default prediction
+            //Implement differentially private mechanism on choice of the default prediction
             d1 = num_not_captured - d0;
-            if (d0 > d1) {
+            if (d0 + noise-> laplace_noise() > d1 + noise->laplace_noise()) {
                 default_prediction = 0;
                 default_correct = d0;
             } else {
