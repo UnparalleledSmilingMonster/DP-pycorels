@@ -36,7 +36,7 @@ cdef extern from "src/corels/src/run.h":
                       PermutationMap*& pmap, CacheTree*& tree, Queue*& queue, double& init,
                       set[string]& verbosity)
 
-    int run_corels_loop(size_t max_num_nodes, PermutationMap* pmap, CacheTree* tree, Queue* queue)
+    int run_corels_loop(size_t max_num_nodes, PermutationMap* pmap, CacheTree* tree, Queue* queue, Noise* noise, unsigned int max_length)
 
     double run_corels_end(vector[int]* rulelist, vector[int]* classes, int early, int latex_out, rule_t* rules,
                           rule_t* labels, char* opt_fname, PermutationMap*& pmap, CacheTree*& tree, Queue*& queue,
@@ -60,6 +60,10 @@ cdef extern from "src/corels/src/queue.h":
     cdef cppclass Queue:
         pass
 
+cdef extern from "src/corels/src/noise.h":
+    cdef cppclass Noise:
+        pass
+        
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def predict_wrap(np.ndarray[np.uint8_t, ndim=2] X, rules):
@@ -182,12 +186,15 @@ cdef int n_rules = 0
 cdef PermutationMap* pmap = NULL
 cdef CacheTree* tree = NULL
 cdef Queue* queue = NULL
+cdef Noise* noise = NULL
 cdef double init = 0.0
 cdef set[string] run_verbosity
 
 def fit_wrap_begin(np.ndarray[np.uint8_t, ndim=2] samples, 
              np.ndarray[np.uint8_t, ndim=2] labels,
-             features, int max_card, double min_support, verbosity_str, int mine_verbose,
+             features, int max_card, double min_support, 
+             double epsilon, double delta, double global_sens, unsigned int max_length, unsigned int seed,  string method,
+             verbosity_str, int mine_verbose,
              int minor_verbose, double c, int policy, int map_type, int ablation,
              int calculate_size):
     global rules
@@ -199,6 +206,8 @@ def fit_wrap_begin(np.ndarray[np.uint8_t, ndim=2] samples,
     cdef rule_t* samples_vecs = _to_vector(samples, &nfeatures)
 
     nsamples = samples.shape[0]
+    
+    noise = new Noise(epsilon, delta, global_sens, max_length, nsamples, seed, method)
 
     if nfeatures > len(features):
         if samples_vecs != NULL:
@@ -348,7 +357,7 @@ def fit_wrap_begin(np.ndarray[np.uint8_t, ndim=2] samples,
 def fit_wrap_loop(size_t max_nodes):
     cdef size_t max_num_nodes = max_nodes
     # This is where the magic happens
-    return (run_corels_loop(max_num_nodes, pmap, tree, queue) != -1)
+    return (run_corels_loop(max_num_nodes, pmap, tree, queue, noise, max_length) != -1)
 
 def fit_wrap_end(int early):
     global rules
