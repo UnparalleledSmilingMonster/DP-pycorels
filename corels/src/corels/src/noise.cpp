@@ -8,11 +8,11 @@
 
 
 //Constructor :
-Noise::Noise(double epsi, double delt, double global_sens, unsigned int nsamples, unsigned int seed, std::string meth):
-epsilon(epsi), delta(delt), global_sensitivity(global_sens), b_lap(global_sensitivity/epsilon), rng(boost::mt19937(seed))
+Noise::Noise(double epsilon, double delta, double global_sens, unsigned int max_length, unsigned int nsamples, unsigned int seed, std::string meth):
+epsilon_per_node(epsilon/(2*max_length-1)), delta_per_node(delta), global_sensitivity(global_sens), b_lap(global_sensitivity/epsilon_per_node), rng(boost::mt19937(seed))
 {
     method = meth;
-    if (method =="global") delta = 0;
+    if (method =="global") delta_per_node = 0;
     else if (method == "smooth"){
         throw std::invalid_argument("The smooth sensitivity method is not yet implemented.");
         /*delta = (delta <= 0 )? (double) (1/nsamples*nsamples) : delta;

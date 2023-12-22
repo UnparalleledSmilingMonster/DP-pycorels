@@ -12,8 +12,8 @@ class Noise{
 
 
 private:
-    double epsilon;
-    double delta;
+    double epsilon_per_node;
+    double delta_per_node;
     double global_sensitivity;
     double b_lap; //the scale coefficient for Laplace mechanism
 
@@ -27,13 +27,13 @@ private:
 
 
 public :
-    Noise(double epsi, double delt, double global_sens, unsigned int nsamples, unsigned int seed, std::string meth = "global");
+    Noise(double epsilon, double delta, double global_sens, unsigned int max_length, unsigned int nsamples, unsigned int seed, std::string meth = "global");
     //~Noise();    //Unique ptr automatically get deleted once out of scope
 
 
     double laplace_noise();
-    double get_epsilon() const {return this->epsilon;}
-    double get_delta() const {return this->delta;}
+    double get_epsilon() const {return this->epsilon_per_node;}
+    double get_delta() const {return this->delta_per_node;}
     double get_sensitivity() const {return this->global_sensitivity;}
 
 };
