@@ -91,6 +91,7 @@ def predict_wrap(np.ndarray[np.uint8_t, ndim=2] X, rules):
 
     # This compiles to C, so it's pretty fast!
     for s in range(nsamples):
+        next_rule = 1
         for r in range(n_rules):
             next_rule = 0
             nidx = antecedent_lengths[r]
@@ -190,6 +191,8 @@ cdef Noise* noise = NULL
 cdef double init = 0.0
 cdef set[string] run_verbosity
 
+
+
 def fit_wrap_begin(np.ndarray[np.uint8_t, ndim=2] samples, 
              np.ndarray[np.uint8_t, ndim=2] labels,
              features, int max_card, double min_support, 
@@ -201,6 +204,7 @@ def fit_wrap_begin(np.ndarray[np.uint8_t, ndim=2] samples,
     global labels_vecs
     global minor
     global n_rules
+    global noise
 
     cdef int nfeatures = 0
     cdef rule_t* samples_vecs = _to_vector(samples, &nfeatures)
