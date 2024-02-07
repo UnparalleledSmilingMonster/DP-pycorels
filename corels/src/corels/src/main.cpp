@@ -237,11 +237,12 @@ int main(int argc, char *argv[]) {
     Queue* queue = NULL;
     double init = 0.0;
     std::set<std::string> run_verbosity;
-    Noise *noise = new Noise(epsilon,delta,1, max_length, nsamples, seed, method);
+    Noise *noise = NULL;
+    //noise = new Noise(epsilon,delta,1, max_length, nsamples, seed, method);
 
     if(run_corels_begin(c, &verbstr[0], curiosity_policy, map_type, ablation, calculate_size,
                         nrules, nlabels, nsamples, rules, labels, meta, freq, &log_fname[0],
-                        pmap, tree, queue, init, run_verbosity) == 0)
+                        pmap, tree, queue, noise, epsilon, delta, 1.0, max_length, seed, method, init, run_verbosity) == 0)
     {
         while(run_corels_loop(max_num_nodes, pmap, tree, queue, noise, max_length) == 0) { }
 

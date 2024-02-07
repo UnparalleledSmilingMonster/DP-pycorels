@@ -33,13 +33,13 @@ cdef extern from "src/corels/src/run.h":
     int run_corels_begin(double c, char* vstring, int curiosity_policy,
                       int map_type, int ablation, int calculate_size, int nrules, int nlabels,
                       int nsamples, rule_t* rules, rule_t* labels, rule_t* meta, int freq, char* log_fname,
-                      PermutationMap*& pmap, CacheTree*& tree, Queue*& queue, double& init,
+                      PermutationMap*& pmap, CacheTree*& tree, Queue*& queue, Noise*& noise, double epsilon, double delta, double sensitivity, unsigned int max_length, unsigned int seed, string method, double& init,
                       set[string]& verbosity)
 
     int run_corels_loop(size_t max_num_nodes, PermutationMap* pmap, CacheTree* tree, Queue* queue, Noise* noise, unsigned int max_length)
 
     double run_corels_end(vector[int]* rulelist, vector[int]* classes, int early, int latex_out, rule_t* rules,
-                          rule_t* labels, char* opt_fname, PermutationMap*& pmap, CacheTree*& tree, Queue*& queue,
+                          rule_t* labels, char* opt_fname, PermutationMap*& pmap, CacheTree*& tree, Queue*& queue, Noise*& noise,
                           double init, set[string]& verbosity)
 
 cdef extern from "src/utils.hh":
@@ -102,21 +102,21 @@ def predict_wrap(np.ndarray[np.uint8_t, ndim=2] X, rules):
                     idx = -idx
                     c = 0
 
-                idx = idx - 1 	""" I suppose that a shift (of 1) was made because otherwise if idx = 0 we don't know if it's the negation or not.
-                		    Consider the case where we consider the feature 0. The input is idx =1, it is not reversed because > 0. 
-                		    Then substract 1, it gives idx = 0 corresponding to feature 0.
-                		    Had we wanted to have the negation of feature 0. The input is idx =-1, it is reversed because < 0. 
-                		    Then substract 1, it gives idx = 0 corresponding to feature 0.
-                		"""
-                if idx >= nfeatures or X[s, idx] != c: """What does the first condition mean? If the antecedent is invalid? It is most probably a
-                				          guard. Second cond is if the antecedent is not true for sample then don't catch the sample.
-                				          Try with the next rule.	
-                   			               """
+                idx = idx - 1 	# I suppose that a shift (of 1) was made because otherwise if idx = 0 we don't know if it's the negation or not.
+                		    #Consider the case where we consider the feature 0. The input is idx =1, it is not reversed because > 0. 
+                		    #Then substract 1, it gives idx = 0 corresponding to feature 0.
+                		    #Had we wanted to have the negation of feature 0. The input is idx =-1, it is reversed because < 0. 
+                		    #Then substract 1, it gives idx = 0 corresponding to feature 0.
+                		
+                if idx >= nfeatures or X[s, idx] != c: #What does the first condition mean? If the antecedent is invalid? It is most probably a
+                				          #guard. Second cond is if the antecedent is not true for sample then don't catch the sample.
+                				          #Try with the next rule.	
+                   			               
                     next_rule = 1
                     break
 
-            if next_rule == 0: """the sample is captured by the current rule (i.e. all antecedents of the rule are true for the sample) 
-            			   so no next rule is assessed"""
+            if next_rule == 0: #the sample is captured by the current rule (i.e. all antecedents of the rule are true for the sample) 
+            			   #so no next rule is assessed
                 out[s] = predictions[r];
                 break
 
@@ -192,6 +192,7 @@ cdef double init = 0.0
 cdef set[string] run_verbosity
 
 
+max_length_global = 0
 
 def fit_wrap_begin(np.ndarray[np.uint8_t, ndim=2] samples, 
              np.ndarray[np.uint8_t, ndim=2] labels,
@@ -205,13 +206,15 @@ def fit_wrap_begin(np.ndarray[np.uint8_t, ndim=2] samples,
     global minor
     global n_rules
     global noise
+    global max_length_global
+    max_length_global = max_length
 
     cdef int nfeatures = 0
     cdef rule_t* samples_vecs = _to_vector(samples, &nfeatures)
 
     nsamples = samples.shape[0]
     
-    noise = new Noise(epsilon, delta, global_sens, max_length, nsamples, seed, method)
+    #noise = new Noise(epsilon, delta, global_sens, max_length, nsamples, seed, method)
 
     if nfeatures > len(features):
         if samples_vecs != NULL:
@@ -340,7 +343,7 @@ def fit_wrap_begin(np.ndarray[np.uint8_t, ndim=2] samples,
     
     cdef int rb = run_corels_begin(c, verbosity, policy, map_type, ablation, calculate_size,
                    n_rules, 2, nsamples, rules, labels_vecs, minor, 0, NULL, pmap, tree,
-                   queue, init, run_verbosity)
+                   queue, noise, epsilon, delta, global_sens, max_length, seed, method, init, run_verbosity)
 
     if rb == -1:
         if labels_vecs != NULL:
@@ -359,9 +362,11 @@ def fit_wrap_begin(np.ndarray[np.uint8_t, ndim=2] samples,
     return True
 
 def fit_wrap_loop(size_t max_nodes):
+    global noise
+    global max_length_global
     cdef size_t max_num_nodes = max_nodes
     # This is where the magic happens
-    return (run_corels_loop(max_num_nodes, pmap, tree, queue, noise, max_length) != -1)
+    return (run_corels_loop(max_num_nodes, pmap, tree, queue, noise, max_length_global) != -1)
 
 def fit_wrap_end(int early):
     global rules
@@ -372,7 +377,7 @@ def fit_wrap_end(int early):
     cdef vector[int] rulelist
     cdef vector[int] classes
     run_corels_end(&rulelist, &classes, early, 0, NULL, NULL, NULL, pmap, tree,
-                    queue, init, run_verbosity)
+                    queue, noise, init, run_verbosity)
 
     r_out = []
     print(rulelist.size())

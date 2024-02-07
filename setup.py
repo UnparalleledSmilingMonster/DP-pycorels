@@ -1,5 +1,6 @@
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
+from Cython.Build import cythonize
 import os
 import sys
 
@@ -28,6 +29,7 @@ def install(gmp):
     
     sources.append('corels/_corels.cpp')
     sources.append('corels/src/utils.cpp')
+    sources.append('corels/_corels.pyx')
 
     cpp_args = ['-Wall', '-O3', '-std=c++11']
     libraries = []
@@ -52,6 +54,7 @@ def install(gmp):
                 extra_compile_args = cpp_args)
 
     extensions = [extension]
+    extensions = cythonize(extension)
 
     numpy_version = 'numpy'
 
