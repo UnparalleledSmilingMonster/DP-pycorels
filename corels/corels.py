@@ -91,8 +91,8 @@ class CorelsClassifier:
     
     _estimator_type = "classifier"
 
-    def __init__(self, c=0.01, n_iter=10000, map_type="prefix", policy="lower_bound",
-                 verbosity=["rulelist"], ablation=0, max_card=2, min_support=0.01, epsilon, delta, max_length = 5, method = "global", seed = 42):
+    def __init__(self,epsilon, delta, c=0.01, n_iter=10000, map_type="prefix", policy="lower_bound",
+                 verbosity=["rulelist"], ablation=0, max_card=2, min_support=0.01, max_length = 5, method = "global", seed = 42):
         self.c = c
         self.n_iter = n_iter
         self.map_type = map_type
@@ -106,6 +106,7 @@ class CorelsClassifier:
         self.max_length = 5
         self.seed = 42   
         self.method = method
+        dp.set_seed(self.seed)
         
 
     def fit(self, X, y, features=[], prediction_name="prediction"):

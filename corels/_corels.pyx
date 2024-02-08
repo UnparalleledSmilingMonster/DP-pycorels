@@ -205,7 +205,6 @@ def fit_wrap_begin(np.ndarray[np.uint8_t, ndim=2] samples,
     global labels_vecs
     global minor
     global n_rules
-    global noise
     global max_length_global
     max_length_global = max_length
 
