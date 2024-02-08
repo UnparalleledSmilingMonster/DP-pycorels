@@ -1,6 +1,5 @@
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
-from Cython.Build import cythonize
 import os
 import sys
 
@@ -12,6 +11,12 @@ class build_numpy(build_ext):
         self.include_dirs.append(numpy.get_include())
 
 def install(gmp):
+    try:
+        from Cython.Build import cythonize
+        redo_cythonize = True
+    except ImportError:
+        redo_cythonize = False
+
     description = 'Python binding of the CORELS algorithm'
     
     with open('corels/README.txt') as f:
@@ -27,9 +32,15 @@ def install(gmp):
     for i in range(len(sources)):
         sources[i] = source_dir + sources[i]
     
-    sources.append('corels/_corels.cpp')
+
     sources.append('corels/src/utils.cpp')
-    sources.append('corels/_corels.pyx')
+
+    if redo_cythonize:
+        sources.append('corels/_corels.pyx')
+    else:
+        sources.append('corels/_corels.cpp')
+    
+    
 
     cpp_args = ['-Wall', '-O3', '-std=c++11']
     libraries = []
@@ -54,7 +65,9 @@ def install(gmp):
                 extra_compile_args = cpp_args)
 
     extensions = [extension]
-    extensions = cythonize(extension)
+
+    if redo_cythonize:
+        extensions = cythonize(extension)
 
     numpy_version = 'numpy'
 
