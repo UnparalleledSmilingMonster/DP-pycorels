@@ -1,9 +1,4 @@
 from corels import load_from_csv, RuleList, CorelsClassifier
-from HeuristicRL import GreedyRLClassifier
-from HeuristicRL_DP import DPGreedyRLClassifier
-from HeuristicRL_DP_smooth import DpSmoothGreedyRLClassifier
-from DP_global_old import DpNoiseGreedyRLClassifier
-
 import numpy as np
 import DP as dp
 import time
