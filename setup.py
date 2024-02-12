@@ -27,7 +27,7 @@ def install(gmp):
 
     source_dir = 'corels/src/corels/src/'
     sources = ['utils.cpp', 'rulelib.cpp', 'run.cpp', 'pmap.cpp', 
-               'corels.cpp', 'cache.cpp']
+               'corels.cpp', 'cache.cpp', 'noise.cpp']
     
     for i in range(len(sources)):
         sources[i] = source_dir + sources[i]
