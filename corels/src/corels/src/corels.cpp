@@ -53,6 +53,7 @@ void evaluate_children(CacheTree* tree, Node* parent, tracking_vector<unsigned s
         rule_vinit(nsamples, &not_captured_equivalent);
         //For debug : to ensure that the generator is not reset at each iteration
         //std::cout << "Laplace noise test " << noise->laplace_noise() << std::endl;
+        //std::cout << "Max length : " << max_length <<std::endl;
         int i, len_prefix;
         len_prefix = parent->depth() + 1;
         parent_lower_bound = parent->lower_bound(); //b + b0

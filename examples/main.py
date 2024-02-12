@@ -24,15 +24,16 @@ def rformat(var):
 if __name__ == '__main__':    
     parser = argparse.ArgumentParser()
     parser.add_argument("--max_card", type=int, help="The maximum of conditions in a rule", default=2, required=False)
-    parser.add_argument("--min_support", type=float, help="The minimum ratio of elements to be split", default=0.0, required = False)
     parser.add_argument("--epsilon", type =float, help="The " + epsilon_letter + " budget of the DP", default=0.0, required=False)
     parser.add_argument("--delta", help="The " + delta_letter + " budget of the DP", default=None, required=False)
+    parser.add_argument("--min_support", type=float, help="The minimum ratio of elements to be split", default=0.01, required = False)
 
     parser.add_argument("--seed", type=int, help="The seed for replicability", default =42, required = False)
     parser.add_argument("--test_train", type=float, help="The train/test ratio (precise train)", default=0.8, required = False)
 
     parser.add_argument("--dataset", type=str, help="The dataset to train the model on", required=True)
     parser.add_argument("--max_length", type=int, help="The maximum length of a rule list", required=True)
+    parser.add_argument("--method", type=str, help = "Whether the algo should be DP or not", default="global-Laplace", required = False)
 
 
     args = parser.parse_args()
@@ -46,13 +47,13 @@ if __name__ == '__main__':
 
     
     start= time.time()
-    corels_rl = CorelsClassifier(epsilon = args.epsilon, delta =args.delta, min_support=args.min_support, max_length=args.max_length,  max_card=args.max_card, seed = args.seed) 
+    corels_rl = CorelsClassifier(epsilon = args.epsilon, delta =args.delta, method = args.method, min_support=args.min_support, max_length=args.max_length,  max_card=args.max_card, seed = args.seed, verbosity=[], c=0.00000001,map_type="prefix", n_iter=100000) 
     corels_rl.fit(X_unbias_train, y_train, features=features_unbias, prediction_name=prediction)  
     args.delta =corels_rl.delta
     end=time.time() - start           
          
-    #print(corels_rl)
-    print([args.dataset, args.max_length, rformat(args.epsilon), pformat(args.delta, "e", 2), rformat(args.min_support), N, end, np.average(corels_rl.predict(X_unbias_train) == y_train), np.average(corels_rl.predict(X_unbias_test) == y_test)] )
+    print(corels_rl)
+    print([args.dataset, args.max_length, args.method, rformat(args.epsilon), pformat(args.delta, "e", 2), N, end, np.average(corels_rl.predict(X_unbias_train) == y_train), np.average(corels_rl.predict(X_unbias_test) == y_test)] )
 
 
 

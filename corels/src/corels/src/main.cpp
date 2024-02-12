@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
     double delta = -1;
     unsigned int max_length = 5;
     unsigned int seed = 42;
-    string method = "global";
+    string method = "global-Laplace";
 
     /* only parsing happens here */
     while ((ch = getopt(argc, argv, "bsLc:p:v:n:r:f:a:u:e:d:l:k:m:")) != -1) {
