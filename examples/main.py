@@ -48,11 +48,11 @@ if __name__ == '__main__':
     start= time.time()
     corels_rl = CorelsClassifier(epsilon = args.epsilon, delta =args.delta, min_support=args.min_support, max_length=args.max_length,  max_card=args.max_card, seed = args.seed) 
     corels_rl.fit(X_unbias_train, y_train, features=features_unbias, prediction_name=prediction)  
-    args.delta =greedy_rl.delta
+    args.delta =corels_rl.delta
     end=time.time() - start           
          
-    print(corels_rl)
-    print([args.dataset, args.max_length, args.mechanism, rformat(args.epsilon), pformat(args.delta, "e", 2), rformat(args.min_support), N, end, np.average(corels_rl.predict(X_unbias_train) == y_train), np.average(corels_rl.predict(X_unbias_test) == y_test)] )
+    #print(corels_rl)
+    print([args.dataset, args.max_length, rformat(args.epsilon), pformat(args.delta, "e", 2), rformat(args.min_support), N, end, np.average(corels_rl.predict(X_unbias_train) == y_train), np.average(corels_rl.predict(X_unbias_test) == y_test)] )
 
 
 

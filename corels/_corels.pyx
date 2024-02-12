@@ -197,7 +197,7 @@ max_length_global = 0
 def fit_wrap_begin(np.ndarray[np.uint8_t, ndim=2] samples, 
              np.ndarray[np.uint8_t, ndim=2] labels,
              features, int max_card, double min_support, 
-             double epsilon, double delta, double global_sens, unsigned int max_length, unsigned int seed,  string method,
+             double epsilon, double delta, double global_sens, unsigned int max_length, unsigned int seed, method,
              verbosity_str, int mine_verbose,
              int minor_verbose, double c, int policy, int map_type, int ablation,
              int calculate_size):

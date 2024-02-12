@@ -37,7 +37,7 @@
             "corels/src/corels/src/pmap.cpp",
             "corels/src/corels/src/corels.cpp",
             "corels/src/corels/src/cache.cpp",
-            "corels/_corels.cpp",
+            "corels/src/corels/src/noise.cpp",
             "corels/src/utils.cpp"
         ]
     },
@@ -2265,6 +2265,10 @@ static CYTHON_INLINE PyObject *__Pyx_PyObject_GetItem(PyObject *obj, PyObject *k
 #define __Pyx_PyUnicode_ConcatInPlaceSafe(left, right) ((unlikely((left) == Py_None) || unlikely((right) == Py_None)) ?\
     PyNumber_InPlaceAdd(left, right) : __Pyx_PyUnicode_ConcatInPlace(left, right))
 
+/* PyObject_Str.proto */
+#define __Pyx_PyObject_Str(obj)\
+    (likely(PyString_CheckExact(obj)) ? __Pyx_NewRef(obj) : PyObject_Str(obj))
+
 /* MoveIfSupported.proto */
 #if CYTHON_USE_CPP_STD_MOVE
   #include <utility>
@@ -2272,10 +2276,6 @@ static CYTHON_INLINE PyObject *__Pyx_PyObject_GetItem(PyObject *obj, PyObject *k
 #else
   #define __PYX_STD_MOVE_IF_SUPPORTED(x) x
 #endif
-
-/* PyObject_Str.proto */
-#define __Pyx_PyObject_Str(obj)\
-    (likely(PyString_CheckExact(obj)) ? __Pyx_NewRef(obj) : PyObject_Str(obj))
 
 /* ListAppend.proto */
 #if CYTHON_USE_PYLIST_INTERNALS && CYTHON_ASSUME_SAFE_MACROS
@@ -2896,7 +2896,7 @@ static const char __pyx_k_Sample_count_mismatch_between_la[] = "Sample count mis
 static const char __pyx_k_numpy_core_umath_failed_to_impor[] = "numpy.core.umath failed to import";
 /* #### Code section: decls ### */
 static PyObject *__pyx_pf_6corels_7_corels_predict_wrap(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_X, PyObject *__pyx_v_rules); /* proto */
-static PyObject *__pyx_pf_6corels_7_corels_2fit_wrap_begin(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_samples, PyArrayObject *__pyx_v_labels, PyObject *__pyx_v_features, int __pyx_v_max_card, double __pyx_v_min_support, double __pyx_v_epsilon, double __pyx_v_delta, double __pyx_v_global_sens, unsigned int __pyx_v_max_length, unsigned int __pyx_v_seed, std::string __pyx_v_method, PyObject *__pyx_v_verbosity_str, int __pyx_v_mine_verbose, int __pyx_v_minor_verbose, double __pyx_v_c, int __pyx_v_policy, int __pyx_v_map_type, int __pyx_v_ablation, int __pyx_v_calculate_size); /* proto */
+static PyObject *__pyx_pf_6corels_7_corels_2fit_wrap_begin(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_samples, PyArrayObject *__pyx_v_labels, PyObject *__pyx_v_features, int __pyx_v_max_card, double __pyx_v_min_support, double __pyx_v_epsilon, double __pyx_v_delta, double __pyx_v_global_sens, unsigned int __pyx_v_max_length, unsigned int __pyx_v_seed, PyObject *__pyx_v_method, PyObject *__pyx_v_verbosity_str, int __pyx_v_mine_verbose, int __pyx_v_minor_verbose, double __pyx_v_c, int __pyx_v_policy, int __pyx_v_map_type, int __pyx_v_ablation, int __pyx_v_calculate_size); /* proto */
 static PyObject *__pyx_pf_6corels_7_corels_4fit_wrap_loop(CYTHON_UNUSED PyObject *__pyx_self, size_t __pyx_v_max_nodes); /* proto */
 static PyObject *__pyx_pf_6corels_7_corels_6fit_wrap_end(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_early); /* proto */
 /* #### Code section: late_includes ### */
@@ -6387,7 +6387,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   double __pyx_v_global_sens;
   unsigned int __pyx_v_max_length;
   unsigned int __pyx_v_seed;
-  std::string __pyx_v_method;
+  PyObject *__pyx_v_method = 0;
   PyObject *__pyx_v_verbosity_str = 0;
   int __pyx_v_mine_verbose;
   int __pyx_v_minor_verbose;
@@ -6689,7 +6689,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
     __pyx_v_global_sens = __pyx_PyFloat_AsDouble(values[7]); if (unlikely((__pyx_v_global_sens == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 200, __pyx_L3_error)
     __pyx_v_max_length = __Pyx_PyInt_As_unsigned_int(values[8]); if (unlikely((__pyx_v_max_length == (unsigned int)-1) && PyErr_Occurred())) __PYX_ERR(0, 200, __pyx_L3_error)
     __pyx_v_seed = __Pyx_PyInt_As_unsigned_int(values[9]); if (unlikely((__pyx_v_seed == (unsigned int)-1) && PyErr_Occurred())) __PYX_ERR(0, 200, __pyx_L3_error)
-    __pyx_v_method = __pyx_convert_string_from_py_std__in_string(values[10]); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 200, __pyx_L3_error)
+    __pyx_v_method = values[10];
     __pyx_v_verbosity_str = values[11];
     __pyx_v_mine_verbose = __Pyx_PyInt_As_int(values[12]); if (unlikely((__pyx_v_mine_verbose == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 201, __pyx_L3_error)
     __pyx_v_minor_verbose = __Pyx_PyInt_As_int(values[13]); if (unlikely((__pyx_v_minor_verbose == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 202, __pyx_L3_error)
@@ -6716,7 +6716,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   __pyx_L4_argument_unpacking_done:;
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_samples), __pyx_ptype_5numpy_ndarray, 1, "samples", 0))) __PYX_ERR(0, 197, __pyx_L1_error)
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_labels), __pyx_ptype_5numpy_ndarray, 1, "labels", 0))) __PYX_ERR(0, 198, __pyx_L1_error)
-  __pyx_r = __pyx_pf_6corels_7_corels_2fit_wrap_begin(__pyx_self, __pyx_v_samples, __pyx_v_labels, __pyx_v_features, __pyx_v_max_card, __pyx_v_min_support, __pyx_v_epsilon, __pyx_v_delta, __pyx_v_global_sens, __pyx_v_max_length, __pyx_v_seed, __PYX_STD_MOVE_IF_SUPPORTED(__pyx_v_method), __pyx_v_verbosity_str, __pyx_v_mine_verbose, __pyx_v_minor_verbose, __pyx_v_c, __pyx_v_policy, __pyx_v_map_type, __pyx_v_ablation, __pyx_v_calculate_size);
+  __pyx_r = __pyx_pf_6corels_7_corels_2fit_wrap_begin(__pyx_self, __pyx_v_samples, __pyx_v_labels, __pyx_v_features, __pyx_v_max_card, __pyx_v_min_support, __pyx_v_epsilon, __pyx_v_delta, __pyx_v_global_sens, __pyx_v_max_length, __pyx_v_seed, __pyx_v_method, __pyx_v_verbosity_str, __pyx_v_mine_verbose, __pyx_v_minor_verbose, __pyx_v_c, __pyx_v_policy, __pyx_v_map_type, __pyx_v_ablation, __pyx_v_calculate_size);
 
   /* function exit code */
   goto __pyx_L0;
@@ -6733,7 +6733,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_6corels_7_corels_2fit_wrap_begin(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_samples, PyArrayObject *__pyx_v_labels, PyObject *__pyx_v_features, int __pyx_v_max_card, double __pyx_v_min_support, double __pyx_v_epsilon, double __pyx_v_delta, double __pyx_v_global_sens, unsigned int __pyx_v_max_length, unsigned int __pyx_v_seed, std::string __pyx_v_method, PyObject *__pyx_v_verbosity_str, int __pyx_v_mine_verbose, int __pyx_v_minor_verbose, double __pyx_v_c, int __pyx_v_policy, int __pyx_v_map_type, int __pyx_v_ablation, int __pyx_v_calculate_size) {
+static PyObject *__pyx_pf_6corels_7_corels_2fit_wrap_begin(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_samples, PyArrayObject *__pyx_v_labels, PyObject *__pyx_v_features, int __pyx_v_max_card, double __pyx_v_min_support, double __pyx_v_epsilon, double __pyx_v_delta, double __pyx_v_global_sens, unsigned int __pyx_v_max_length, unsigned int __pyx_v_seed, PyObject *__pyx_v_method, PyObject *__pyx_v_verbosity_str, int __pyx_v_mine_verbose, int __pyx_v_minor_verbose, double __pyx_v_c, int __pyx_v_policy, int __pyx_v_map_type, int __pyx_v_ablation, int __pyx_v_calculate_size) {
   int __pyx_v_nfeatures;
   rule_t *__pyx_v_samples_vecs;
   PyObject *__pyx_v_nsamples = NULL;
@@ -6773,6 +6773,7 @@ static PyObject *__pyx_pf_6corels_7_corels_2fit_wrap_begin(CYTHON_UNUSED PyObjec
   PyObject *__pyx_t_18 = NULL;
   PyObject *__pyx_t_19 = NULL;
   PyObject *__pyx_t_20 = NULL;
+  std::string __pyx_t_21;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -8283,6 +8284,15 @@ static PyObject *__pyx_pf_6corels_7_corels_2fit_wrap_begin(CYTHON_UNUSED PyObjec
  */
   __pyx_t_6 = __Pyx_PyInt_As_int(__pyx_v_nsamples); if (unlikely((__pyx_t_6 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 344, __pyx_L1_error)
 
+  /* "corels/_corels.pyx":345
+ *     cdef int rb = run_corels_begin(c, verbosity, policy, map_type, ablation, calculate_size,
+ *                    n_rules, 2, nsamples, rules, labels_vecs, minor, 0, NULL, pmap, tree,
+ *                    queue, noise, epsilon, delta, global_sens, max_length, seed, method, init, run_verbosity)             # <<<<<<<<<<<<<<
+ * 
+ *     if rb == -1:
+ */
+  __pyx_t_21 = __pyx_convert_string_from_py_std__in_string(__pyx_v_method); if (unlikely(PyErr_Occurred())) __PYX_ERR(0, 345, __pyx_L1_error)
+
   /* "corels/_corels.pyx":343
  *     """
  * 
@@ -8290,7 +8300,7 @@ static PyObject *__pyx_pf_6corels_7_corels_2fit_wrap_begin(CYTHON_UNUSED PyObjec
  *                    n_rules, 2, nsamples, rules, labels_vecs, minor, 0, NULL, pmap, tree,
  *                    queue, noise, epsilon, delta, global_sens, max_length, seed, method, init, run_verbosity)
  */
-  __pyx_v_rb = run_corels_begin(__pyx_v_c, __pyx_v_verbosity, __pyx_v_policy, __pyx_v_map_type, __pyx_v_ablation, __pyx_v_calculate_size, __pyx_v_6corels_7_corels_n_rules, 2, __pyx_t_6, __pyx_v_6corels_7_corels_rules, __pyx_v_6corels_7_corels_labels_vecs, __pyx_v_6corels_7_corels_minor, 0, NULL, __pyx_v_6corels_7_corels_pmap, __pyx_v_6corels_7_corels_tree, __pyx_v_6corels_7_corels_queue, __pyx_v_6corels_7_corels_noise, __pyx_v_epsilon, __pyx_v_delta, __pyx_v_global_sens, __pyx_v_max_length, __pyx_v_seed, __pyx_v_method, __pyx_v_6corels_7_corels_init, __pyx_v_6corels_7_corels_run_verbosity);
+  __pyx_v_rb = run_corels_begin(__pyx_v_c, __pyx_v_verbosity, __pyx_v_policy, __pyx_v_map_type, __pyx_v_ablation, __pyx_v_calculate_size, __pyx_v_6corels_7_corels_n_rules, 2, __pyx_t_6, __pyx_v_6corels_7_corels_rules, __pyx_v_6corels_7_corels_labels_vecs, __pyx_v_6corels_7_corels_minor, 0, NULL, __pyx_v_6corels_7_corels_pmap, __pyx_v_6corels_7_corels_tree, __pyx_v_6corels_7_corels_queue, __pyx_v_6corels_7_corels_noise, __pyx_v_epsilon, __pyx_v_delta, __pyx_v_global_sens, __pyx_v_max_length, __pyx_v_seed, __PYX_STD_MOVE_IF_SUPPORTED(__pyx_t_21), __pyx_v_6corels_7_corels_init, __pyx_v_6corels_7_corels_run_verbosity);
 
   /* "corels/_corels.pyx":347
  *                    queue, noise, epsilon, delta, global_sens, max_length, seed, method, init, run_verbosity)

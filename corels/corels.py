@@ -106,7 +106,9 @@ class CorelsClassifier:
         self.max_length = 5
         self.seed = 42   
         self.method = method
-        dp.set_seed(self.seed)
+        self.method = self.method.encode()
+        self.global_sensitivity=1
+        self.delta = 0.0
         
 
     def fit(self, X, y, features=[], prediction_name="prediction"):
@@ -236,7 +238,10 @@ class CorelsClassifier:
 
         map_id = map_types.index(self.map_type)
         policy_id = policies.index(self.policy)
+        
 
+        
+        
         fr = fit_wrap_begin(samples.astype(np.uint8, copy=False),
                              labels.astype(np.uint8, copy=False), rl.features,
                              self.max_card, self.min_support, self.epsilon, self.delta, 

@@ -9,7 +9,7 @@
 
 //Constructor :
 Noise::Noise(double epsilon, double delta, double global_sens, unsigned int max_length, unsigned int nsamples, unsigned int seed, std::string meth):
-epsilon_per_node(epsilon/(3*(max_length-1))), delta_per_node(delta), global_sensitivity(global_sens), b_lap(global_sensitivity/epsilon_per_node), rng(boost::mt19937(seed))
+epsilon_per_node(epsilon/(2*max_length-1)), delta_per_node(delta/(2*max_length-1)), global_sensitivity(global_sens), b_lap(global_sensitivity/epsilon_per_node), rng(boost::mt19937(seed))
 {
     method = meth;
     if (method =="global") delta_per_node = 0;
